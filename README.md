@@ -65,7 +65,7 @@ cd detectron2 && pip install -e . && cd ..
 Download the **ClearPose** dataset from [https://github.com/opipari/ClearPose](https://github.com/opipari/ClearPose).
 We use the heavy-occlusion subset: 2,878 training images and 773 validation images.
 
-Download the **Trans10K-v2** dataset from [https://github.com/xieenze/SegmentTransparentObjects](https://github.com/xieenze/SegmentTransparentObjects).
+Download the **Trans10K-v2** dataset from [https://github.com/xieenze/SegmentTransparentObjects](https://github.com/xieenze/Trans2Seg).
 
 Place datasets under `datasets/`:
 ```
