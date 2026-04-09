@@ -268,8 +268,8 @@ If you use this code, please cite:
 
 ```bibtex
 @article{chhun2026beacon,
-  title={BEACON: A Boundary-Enhanced and Content-Adaptive Query Framework for Transparent Object Instance Segmentation},
-  author={Chhun, Rotanakkosal and Kong, Vungsovanreach and Nayyar, Anand and Kim, Tae-Kyung},
+  title={Boundary-Enhanced and Content-Adaptive Query Framework for Transparent Object Instance Segmentation (BEACON)},
+  author={Chhun Rotanakkosal and KongVungsovanreach and Nayyar Anand and Kim Tae-Kyung},
   journal={},
   year={2026}
 }
