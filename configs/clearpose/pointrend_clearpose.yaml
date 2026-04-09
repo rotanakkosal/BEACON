@@ -1,0 +1,56 @@
+# PointRend Baseline for ClearPose
+# Boundary-focused instance segmentation using iterative point-based refinement.
+# For comparison with our boundary supervision approach.
+#
+# Run with:
+#   CUDA_VISIBLE_DEVICES=0 python train-set/train_additional_baselines.py \
+#       --config-file configs/clearpose/pointrend_baseline.yaml --num-gpus 1
+
+_BASE_: "../../detectron2/projects/PointRend/configs/InstanceSegmentation/pointrend_rcnn_R_50_FPN_3x_coco.yaml"
+
+# Dataset
+DATASETS:
+  TRAIN: ("clearpose_train",)
+  TEST: ("clearpose_val",)
+
+# Model - single class (transparent object)
+MODEL:
+  ROI_HEADS:
+    NUM_CLASSES: 1
+  POINT_HEAD:
+    NUM_CLASSES: 1
+  WEIGHTS: "detectron2://ImageNetPretrained/MSRA/R-50.pkl"
+  RESNETS:
+    DEPTH: 50
+
+# Input - MATCHED to other baselines
+INPUT:
+  MIN_SIZE_TRAIN: (480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800)
+  MIN_SIZE_TRAIN_SAMPLING: "choice"
+  MIN_SIZE_TEST: 800
+  MAX_SIZE_TRAIN: 1333
+  MAX_SIZE_TEST: 1333
+  FORMAT: "RGB"
+  MASK_FORMAT: "bitmask"
+
+# Solver - MATCHED to other baselines
+SOLVER:
+  IMS_PER_BATCH: 8
+  BASE_LR: 0.0001
+  MAX_ITER: 15000
+  STEPS: (10000, 12000)
+  WARMUP_FACTOR: 1.0
+  WARMUP_ITERS: 10
+  WEIGHT_DECAY: 0.05
+  CHECKPOINT_PERIOD: 1000
+  CLIP_GRADIENTS:
+    ENABLED: True
+    CLIP_TYPE: "value"
+    CLIP_VALUE: 1.0
+
+# Test
+TEST:
+  EVAL_PERIOD: 1000
+  DETECTIONS_PER_IMAGE: 100
+
+OUTPUT_DIR: "./output/pointrend_baseline"

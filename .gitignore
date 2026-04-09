@@ -1,0 +1,51 @@
+# Output directories
+output/
+instant_test_output/
+inference_test_output/
+
+# Pretrained weights (download separately, see weights/README.md)
+weights/pkl/*.pkl
+weights/pkl/*.pth
+weights/*.pth
+weights/*.pkl
+
+# Dataset images (download separately, see datasets/README.md)
+datasets/clearpose_dataset/set*/
+datasets/trans10k/images/
+datasets/coco/
+
+# Compilation and distribution
+__pycache__/
+*.pyc
+*.pyd
+*.so
+*.dll
+*.egg-info/
+build/
+dist/
+
+# PyTorch/Python/NumPy formats
+*.pth
+!weights/README.md
+
+# Jupyter notebooks
+*.ipynb
+**/.ipynb_checkpoints/
+
+# Editor temporaries
+*.swn
+*.swo
+*.swp
+*~
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# AI assistant configs
+.claude/
+.gemini/
+.gemini.md
+.geminiignore

@@ -1,0 +1,63 @@
+# Trans10K Baseline: 100 static queries, no boundary supervision, no content queries
+# Mirrors setting_a_baseline.yaml but on Trans10K dataset.
+# Run with: train-set/train_net.py
+
+_BASE_: "../coco/instance-segmentation/swin/default_maskformer2_swin*/maskformer2_swin_base_IN21k_384_bs16_50ep.yaml"
+
+MODEL:
+  META_ARCHITECTURE: "MaskFormer"
+  WEIGHTS: "weights/pkl/model_final_83d103.pkl"
+
+  SEM_SEG_HEAD:
+    NUM_CLASSES: 1
+
+  MASK_FORMER:
+    NUM_OBJECT_QUERIES: 100
+    TEST:
+      SEMANTIC_ON: False
+      INSTANCE_ON: True
+      PANOPTIC_ON: False
+      OBJECT_MASK_THRESHOLD: 0.5
+      OVERLAP_THRESHOLD: 0.8
+
+DATASETS:
+  TRAIN: ("trans10k_train",)
+  TEST:  ("trans10k_val",)
+
+INPUT:
+  DATASET_MAPPER_NAME: "mask_former_instance"
+  MIN_SIZE_TRAIN: (480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800)
+  MIN_SIZE_TRAIN_SAMPLING: "choice"
+  MIN_SIZE_TEST: 800
+  MAX_SIZE_TRAIN: 1333
+  MAX_SIZE_TEST: 1333
+  CROP:
+    ENABLED: True
+    TYPE: "absolute"
+    SIZE: (384, 600)
+  FORMAT: "RGB"
+  MASK_FORMAT: "bitmask"
+
+SOLVER:
+  IMS_PER_BATCH: 8
+  BASE_LR: 0.0001
+  STEPS: (10000, 12000)
+  MAX_ITER: 15000
+  WARMUP_FACTOR: 1.0
+  WARMUP_ITERS: 10
+  WEIGHT_DECAY: 0.05
+  OPTIMIZER: "ADAMW"
+  BACKBONE_MULTIPLIER: 0.1
+  CLIP_GRADIENTS:
+    ENABLED: True
+    CLIP_TYPE: "full_model"
+    CLIP_VALUE: 0.01
+    NORM_TYPE: 2.0
+  AMP:
+    ENABLED: True
+
+TEST:
+  EVAL_PERIOD: 1000
+  DETECTIONS_PER_IMAGE: 100
+
+OUTPUT_DIR: "./output/trans10k/baseline"

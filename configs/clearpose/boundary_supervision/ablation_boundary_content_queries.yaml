@@ -1,0 +1,92 @@
+# Ablation: Boundary Supervision + Content-Adaptive Queries
+#
+# Table 3 row 3: AP = 44.34, APs = 8.84 (+0.50 AP, +1.72 APs over boundary-only)
+#
+# Adds content-adaptive query initialization on top of boundary supervision.
+# Decoder boundary dice loss is NOT enabled here (added in beacon_clearpose.yaml).
+#
+# Run with:
+#   python train-set/train_net_boundary_supervision.py \
+#     --config-file configs/clearpose/boundary_supervision/ablation_boundary_content_queries.yaml \
+#     --num-gpus 1
+
+_BASE_: "beacon_base_clearpose.yaml"
+
+# -----------------------------------------------------------------------
+# Model
+# -----------------------------------------------------------------------
+MODEL:
+  BOUNDARY:
+    USE_BOUNDARY_SUPERVISION: True
+    USE_QUERY_PRIOR: True
+    USE_OVERLAP_PENALTY: True
+
+    DILATION_RADIUS: 2
+    CONTACT_DILATION: 1
+    BAND_RADIUS: 3
+    HANDLE_OVERLAPS: True
+
+    HEAD_HIDDEN_DIM: 64
+    NUM_GROUPS: 8
+    OUTPUT_BIAS: -2.0
+
+    QUERY_PRIOR_DIM: 32
+    ALPHA_SCALE: 0.3
+
+    FG_WEIGHT: 20.0
+    CONTACT_WEIGHT: 40.0
+    OVERLAP_WEIGHT: 1.0
+    FOCAL_ALPHA: 0.25
+    FOCAL_GAMMA: 2.0
+
+    TEACHER_FORCING_WARMUP: 5000
+    OVERLAP_WARMUP_ITERS: 2000
+    OVERLAP_CONTACT_ONLY: False
+    OVERLAP_MIN_CONF: 0.0
+
+    # Decoder boundary dice loss disabled (ablation: boundary + queries only)
+    DECODER_BOUNDARY_LOSS_ENABLED: False
+
+  MASK_FORMER:
+    CONTENT_QUERY_ENABLED: True
+    NUM_CONTENT_QUERIES: 50
+    CONTENT_QUERY_WARMUP: 2000
+    CONTENT_MASK_SCORE_WEIGHT: 0.5
+    ENC_LOSS_CE_WEIGHT: 2.0
+    ENC_LOSS_MASK_WEIGHT: 5.0
+    ENC_LOSS_DICE_WEIGHT: 5.0
+
+# -----------------------------------------------------------------------
+# Input: High-resolution + copy-paste augmentation
+# -----------------------------------------------------------------------
+INPUT:
+  DATASET_MAPPER_NAME: "boundary_copypaste_v2"
+  MIN_SIZE_TRAIN: (640, 704, 768, 832, 896, 960)
+  MIN_SIZE_TRAIN_SAMPLING: "choice"
+  MIN_SIZE_TEST: 960
+  MAX_SIZE_TRAIN: 1600
+  MAX_SIZE_TEST: 1600
+  CROP:
+    ENABLED: True
+    TYPE: "absolute"
+    SIZE: (512, 800)
+
+  COPY_PASTE_PROB: 0.65
+  MAX_PASTE_OBJECTS: 5
+  BLEND_SIGMA: 2.0
+  SAME_SCENE_ONLY: True
+  SMALL_OBJECT_THRESHOLD: 1024
+  SMALL_OBJECT_PRIORITY: 0.9
+  MIN_OBJECT_SIZE_EXTRACT: 25
+  OCCLUSION_THRESHOLD: 0.20
+
+# -----------------------------------------------------------------------
+# Solver
+# -----------------------------------------------------------------------
+SOLVER:
+  CHECKPOINT_PERIOD: 1000
+
+TEST:
+  EVAL_PERIOD: 1000
+
+OUTPUT_DIR: "./output/ablation_boundary_content_queries"

@@ -1,0 +1,25 @@
+# BEACON Full Model — Trans10K-v2 Dataset
+#
+# BEACON generalization experiment: same architecture as beacon_clearpose.yaml,
+# applied to Trans10K-v2. Result: 68.51 AP (Table 2 in paper).
+#
+# Key difference from ClearPose: copy-paste is disabled because Trans10K has
+# no scene grouping — cross-scene pasting degrades performance.
+#
+# Run with:
+#   python train-set/train_net_boundary_supervision.py \
+#     --config-file configs/trans10k/beacon_trans10k.yaml \
+#     --num-gpus 1
+
+_BASE_: "../clearpose/boundary_supervision/beacon_clearpose.yaml"
+
+DATASETS:
+  TRAIN: ("trans10k_train",)
+  TEST:  ("trans10k_val",)
+
+INPUT:
+  # Disable copy-paste — Trans10K has no scene grouping
+  DATASET_MAPPER_NAME: "boundary_instance"
+  SAME_SCENE_ONLY: False
+
+OUTPUT_DIR: "./output/beacon_trans10k"

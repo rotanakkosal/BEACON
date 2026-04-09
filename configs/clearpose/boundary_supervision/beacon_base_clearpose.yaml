@@ -1,0 +1,107 @@
+# Base config for boundary supervision experiments
+# Inherits from COCO Swin-Base config
+
+_BASE_: "../../coco/instance-segmentation/swin/default_maskformer2_swin*/maskformer2_swin_base_IN21k_384_bs16_50ep.yaml"
+
+# Use boundary supervision model
+MODEL:
+  META_ARCHITECTURE: "MaskFormerBoundarySupervision"
+  WEIGHTS: "weights/pkl/model_final_83d103.pkl"  # Pretrained Swin-Base weights
+
+  # ClearPose has only 1 class: transparent_object
+  SEM_SEG_HEAD:
+    NUM_CLASSES: 1
+
+  # Mask Former settings
+  MASK_FORMER:
+    NUM_OBJECT_QUERIES: 100
+    TEST:
+      SEMANTIC_ON: False
+      INSTANCE_ON: True
+      PANOPTIC_ON: False
+      OBJECT_MASK_THRESHOLD: 0.5
+      OVERLAP_THRESHOLD: 0.8
+
+  # Boundary supervision defaults (to be overridden per setting)
+  BOUNDARY:
+    # Main switches
+    USE_BOUNDARY_SUPERVISION: False
+    USE_QUERY_PRIOR: False
+    USE_OVERLAP_PENALTY: False
+
+    # Target generation
+    DILATION_RADIUS: 2
+    CONTACT_DILATION: 1
+    BAND_RADIUS: 3
+    HANDLE_OVERLAPS: True
+
+    # Boundary head
+    HEAD_HIDDEN_DIM: 64
+    NUM_GROUPS: 8
+    OUTPUT_BIAS: -2.0
+
+    # Query prior
+    QUERY_PRIOR_DIM: 32
+    ALPHA_SCALE: 0.3
+
+    # Loss weights
+    FG_WEIGHT: 1.0
+    CONTACT_WEIGHT: 2.0
+    OVERLAP_WEIGHT: 1.0
+    FOCAL_ALPHA: 0.25
+    FOCAL_GAMMA: 2.0
+
+    # Schedules
+    OVERLAP_WARMUP_ITERS: 2000
+    TEACHER_FORCING_WARMUP: 5000
+
+    # Overlap penalty
+    OVERLAP_CONTACT_ONLY: True
+    OVERLAP_MIN_CONF: 0.0
+
+# Dataset
+DATASETS:
+  TRAIN: ("clearpose_train",)
+  TEST: ("clearpose_val",)
+
+# Use boundary-aware dataset mapper
+INPUT:
+  DATASET_MAPPER_NAME: "boundary_instance"
+  MIN_SIZE_TRAIN: (480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800)
+  MIN_SIZE_TRAIN_SAMPLING: "choice"
+  MIN_SIZE_TEST: 800
+  MAX_SIZE_TRAIN: 1333
+  MAX_SIZE_TEST: 1333
+  CROP:
+    ENABLED: True
+    TYPE: "absolute"
+    SIZE: (384, 600)
+  FORMAT: "RGB"
+  MASK_FORMAT: "bitmask"
+
+# Solver
+SOLVER:
+  IMS_PER_BATCH: 8
+  BASE_LR: 0.0001
+  STEPS: (10000, 12000)
+  MAX_ITER: 15000
+  WARMUP_FACTOR: 1.0
+  WARMUP_ITERS: 10
+  WEIGHT_DECAY: 0.05
+  OPTIMIZER: "ADAMW"
+  BACKBONE_MULTIPLIER: 0.1
+  CLIP_GRADIENTS:
+    ENABLED: True
+    CLIP_TYPE: "full_model"
+    CLIP_VALUE: 0.01
+    NORM_TYPE: 2.0
+  AMP:
+    ENABLED: True
+
+# Test
+TEST:
+  EVAL_PERIOD: 1000
+  DETECTIONS_PER_IMAGE: 100
+
+# Output
+OUTPUT_DIR: "./output/boundary_supervision"

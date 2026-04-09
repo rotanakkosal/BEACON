@@ -1,0 +1,107 @@
+# BEACON Full Model — ClearPose Dataset
+#
+# BEACON: Boundary-Enhanced and Content-Adaptive Query Framework
+# Main result: 44.88 AP on ClearPose validation set (Table 1 in paper)
+#
+# Three components enabled:
+#   1. Auxiliary boundary head with boundary focal loss (lambda=20.0)
+#   2. Hybrid content-adaptive query initialization (50 static + 50 dynamic)
+#   3. Decoder boundary dice loss at every decoder layer (weight=2.0)
+#
+# Training: 15,000 iterations, batch size 8, single GPU
+# Input: high-resolution (640-960px), copy-paste augmentation
+#
+# Run with:
+#   python train-set/train_net_boundary_supervision.py \
+#     --config-file configs/clearpose/boundary_supervision/beacon_clearpose.yaml \
+#     --num-gpus 1
+
+_BASE_: "beacon_base_clearpose.yaml"
+
+# -----------------------------------------------------------------------
+# Model: BEACON full configuration
+# -----------------------------------------------------------------------
+MODEL:
+  BOUNDARY:
+    # Component 1: Auxiliary boundary head
+    USE_BOUNDARY_SUPERVISION: True
+    USE_QUERY_PRIOR: True
+    USE_OVERLAP_PENALTY: True
+
+    # Boundary target generation
+    DILATION_RADIUS: 2
+    CONTACT_DILATION: 1
+    BAND_RADIUS: 3
+    HANDLE_OVERLAPS: True
+
+    # Boundary head architecture (two 3x3 conv, GroupNorm, ReLU)
+    HEAD_HIDDEN_DIM: 64
+    NUM_GROUPS: 8
+    OUTPUT_BIAS: -2.0
+
+    # Query prior settings
+    QUERY_PRIOR_DIM: 32
+    ALPHA_SCALE: 0.3
+
+    # Boundary focal loss weights (lambda_boundary = 20.0)
+    FG_WEIGHT: 20.0
+    CONTACT_WEIGHT: 40.0
+    OVERLAP_WEIGHT: 1.0
+    FOCAL_ALPHA: 0.25
+    FOCAL_GAMMA: 2.0
+
+    # Warmup schedules
+    TEACHER_FORCING_WARMUP: 5000
+    OVERLAP_WARMUP_ITERS: 2000
+    OVERLAP_CONTACT_ONLY: False
+    OVERLAP_MIN_CONF: 0.0
+
+    # Component 3: Decoder boundary dice loss (lambda_bd = 2.0)
+    DECODER_BOUNDARY_LOSS_ENABLED: True
+    DECODER_BOUNDARY_LOSS_WEIGHT: 2.0
+
+  # Component 2: Content-adaptive query initialization
+  MASK_FORMER:
+    CONTENT_QUERY_ENABLED: True
+    NUM_CONTENT_QUERIES: 50          # 50 dynamic + 50 static = 100 total queries
+    CONTENT_QUERY_WARMUP: 2000       # iterations before activating dynamic queries
+    CONTENT_MASK_SCORE_WEIGHT: 0.5   # lambda in combined class+mask scoring (Eq. 9)
+    ENC_LOSS_CE_WEIGHT: 2.0
+    ENC_LOSS_MASK_WEIGHT: 5.0
+    ENC_LOSS_DICE_WEIGHT: 5.0
+
+# -----------------------------------------------------------------------
+# Input: High-resolution + copy-paste augmentation
+# -----------------------------------------------------------------------
+INPUT:
+  DATASET_MAPPER_NAME: "boundary_copypaste_v2"
+  MIN_SIZE_TRAIN: (640, 704, 768, 832, 896, 960)
+  MIN_SIZE_TRAIN_SAMPLING: "choice"
+  MIN_SIZE_TEST: 960
+  MAX_SIZE_TRAIN: 1600
+  MAX_SIZE_TEST: 1600
+  CROP:
+    ENABLED: True
+    TYPE: "absolute"
+    SIZE: (512, 800)
+
+  # Copy-paste augmentation settings
+  COPY_PASTE_PROB: 0.65
+  MAX_PASTE_OBJECTS: 5
+  BLEND_SIGMA: 2.0
+  SAME_SCENE_ONLY: True
+  SMALL_OBJECT_THRESHOLD: 1024      # 32x32 pixels (COCO small definition)
+  SMALL_OBJECT_PRIORITY: 0.9
+  MIN_OBJECT_SIZE_EXTRACT: 25
+  OCCLUSION_THRESHOLD: 0.20
+
+# -----------------------------------------------------------------------
+# Solver
+# -----------------------------------------------------------------------
+SOLVER:
+  CHECKPOINT_PERIOD: 1000
+
+TEST:
+  EVAL_PERIOD: 1000
+
+OUTPUT_DIR: "./output/beacon_clearpose"

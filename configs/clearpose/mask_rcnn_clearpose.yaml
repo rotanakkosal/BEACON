@@ -1,0 +1,59 @@
+# Mask R-CNN Baseline for ClearPose
+# For fair comparison with our Mask2Former boundary supervision approach
+#
+# Key differences from Mask2Former (inherent to architecture):
+# - Backbone: ResNet-50 (vs Swin-B)
+# - Architecture: Two-stage (vs Transformer-based)
+#
+# Matched parameters:
+# - Same dataset, batch size, learning rate, iterations
+# - Same input sizes
+#
+# Run with:
+# python train-set/train_mask_rcnn_baseline.py --num-gpus 1
+
+_BASE_: "../../detectron2/configs/COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"
+
+# Dataset
+DATASETS:
+  TRAIN: ("clearpose_train",)
+  TEST: ("clearpose_val",)
+
+# Model - single class (transparent object)
+MODEL:
+  ROI_HEADS:
+    NUM_CLASSES: 1
+  WEIGHTS: "detectron2://COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x/137849600/model_final_f10217.pkl"
+
+# Input - MATCHED to Mask2Former baseline
+INPUT:
+  MIN_SIZE_TRAIN: (480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800)
+  MIN_SIZE_TRAIN_SAMPLING: "choice"
+  MIN_SIZE_TEST: 800
+  MAX_SIZE_TRAIN: 1333
+  MAX_SIZE_TEST: 1333
+  FORMAT: "RGB"
+  MASK_FORMAT: "bitmask"
+
+# Solver - MATCHED to Mask2Former baseline where possible
+SOLVER:
+  IMS_PER_BATCH: 8
+  BASE_LR: 0.0001
+  MAX_ITER: 15000
+  STEPS: (10000, 12000)
+  WARMUP_FACTOR: 1.0
+  WARMUP_ITERS: 10
+  WEIGHT_DECAY: 0.05
+  CHECKPOINT_PERIOD: 1000
+  # Note: Mask R-CNN uses "value" type gradient clipping (different from Mask2Former's "full_model")
+  CLIP_GRADIENTS:
+    ENABLED: True
+    CLIP_TYPE: "value"
+    CLIP_VALUE: 1.0
+
+# Test - MATCHED to Mask2Former baseline
+TEST:
+  EVAL_PERIOD: 1000
+  DETECTIONS_PER_IMAGE: 100
+
+OUTPUT_DIR: "./output/mask_rcnn_baseline"

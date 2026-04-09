@@ -1,0 +1,36 @@
+# Ablation: Content-Adaptive Queries Only (no boundary supervision)
+#
+# Table 4: Tests content-adaptive query initialization without boundary supervision.
+# Goal: Isolate the effect of content queries on the vanilla Mask2Former baseline.
+# Result: AP improves modestly, confirming that boundary supervision is the
+# primary driver and queries alone are insufficient for transparent objects.
+#
+# Run with:
+#   python train-set/train_net_boundary_supervision.py \
+#     --config-file configs/clearpose/boundary_supervision/ablation_content_queries_only.yaml \
+#     --num-gpus 1
+
+_BASE_: "beacon_base_clearpose.yaml"
+
+MODEL:
+  BOUNDARY:
+    USE_BOUNDARY_SUPERVISION: False
+    USE_QUERY_PRIOR: False
+    USE_OVERLAP_PENALTY: False
+
+  MASK_FORMER:
+    CONTENT_QUERY_ENABLED: True
+    NUM_CONTENT_QUERIES: 50
+    CONTENT_QUERY_WARMUP: 2000
+    CONTENT_MASK_SCORE_WEIGHT: 0.5
+    ENC_LOSS_CE_WEIGHT: 2.0
+    ENC_LOSS_MASK_WEIGHT: 5.0
+    ENC_LOSS_DICE_WEIGHT: 5.0
+
+SOLVER:
+  CHECKPOINT_PERIOD: 1000
+
+TEST:
+  EVAL_PERIOD: 1000
+
+OUTPUT_DIR: "./output/ablation_content_queries_only"
