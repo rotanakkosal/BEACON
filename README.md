@@ -1,16 +1,36 @@
-# BEACON: A Boundary-Enhanced and Content-Adaptive Query Framework for Transparent Object Instance Segmentation
-
-Rotanakkosal Chhun, Vungsovanreach Kong, Anand Nayyar, and Tae-Kyung Kim
-
-Department of Big Data, Chungbuk National University, Cheongju-si, South Korea
-
----
+# Boundary-Enhanced and Content-Adaptive Query Framework for Transparent Object Instance Segmentation (BEACON)
 
 ## Abstract
 
 Transparent object instance segmentation remains difficult in robotic perception and scene understanding, as adjacent transparent instances often exhibit weak or ambiguous boundaries, while small or heavily occluded objects are easily missed. We propose **BEACON** (Boundary-Enhanced and Content-Adaptive Query Framework), a training-time framework for RGB-only transparent object instance segmentation built on Mask2Former. BEACON combines an auxiliary boundary head, a decoder boundary dice loss, and a hybrid content-adaptive query initialization strategy.
 
 On the **ClearPose** dataset, BEACON achieves **44.88 AP**, improving over Mask2Former by 7.52 AP (+20.1%), with gains of 13.63 AP₅₀ (22.7%) and 3.12 APₛ (44.6%), and outperforming Mask R-CNN by 18.94 AP. On **Trans10K-v2**, it further improves AP by 1.14 and APₛ by 2.24 over Mask2Former.
+
+---
+## Method Overview
+
+BEACON addresses two failure modes in transformer-based transparent object segmentation:
+
+1. **Weak boundary supervision** — adjacent transparent instances merge into a single prediction
+2. **Static query initialization** — small or heavily occluded objects are missed at the earliest decoding stage
+
+BEACON adds three components on top of Mask2Former:
+
+- **Auxiliary boundary head**: supervises shared pixel-decoder features with boundary focal loss to learn edge-aware representations
+- **Decoder boundary dice loss**: directly supervises per-query mask edge quality at every decoder stage with zero added inference parameters
+- **Hybrid content-adaptive query initialization**: replaces 50 of 100 static queries with image-conditioned queries selected from encoder memory using a combined class+mask scoring function
+
+The base inference architecture is **unchanged** — all additions are training-time only.
+
+---
+
+### Baseline Methods
+
+Mask DINO and OneFormer results in the comparison tables were reproduced using their official implementations:
+- **Mask DINO**: [https://github.com/IDEA-Research/MaskDINO](https://github.com/IDEA-Research/MaskDINO)
+- **OneFormer**: [https://github.com/SHI-Labs/OneFormer](https://github.com/SHI-Labs/OneFormer)
+
+Mask R-CNN and PointRend baselines are trained using the scripts and configs included in this repository.
 
 ---
 
@@ -182,33 +202,6 @@ python eval-set/eval_coco_transparent.py \
   --config-file configs/clearpose/boundary_supervision/beacon_clearpose.yaml \
   --checkpoint output/beacon_clearpose/model_0011999.pth
 ```
-
----
-
-## Method Overview
-
-BEACON addresses two failure modes in transformer-based transparent object segmentation:
-
-1. **Weak boundary supervision** — adjacent transparent instances merge into a single prediction
-2. **Static query initialization** — small or heavily occluded objects are missed at the earliest decoding stage
-
-BEACON adds three components on top of Mask2Former:
-
-- **Auxiliary boundary head**: supervises shared pixel-decoder features with boundary focal loss to learn edge-aware representations
-- **Decoder boundary dice loss**: directly supervises per-query mask edge quality at every decoder stage with zero added inference parameters
-- **Hybrid content-adaptive query initialization**: replaces 50 of 100 static queries with image-conditioned queries selected from encoder memory using a combined class+mask scoring function
-
-The base inference architecture is **unchanged** — all additions are training-time only.
-
----
-
-### Baseline Methods
-
-Mask DINO and OneFormer results in the comparison tables were reproduced using their official implementations:
-- **Mask DINO**: [https://github.com/IDEA-Research/MaskDINO](https://github.com/IDEA-Research/MaskDINO)
-- **OneFormer**: [https://github.com/SHI-Labs/OneFormer](https://github.com/SHI-Labs/OneFormer)
-
-Mask R-CNN and PointRend baselines are trained using the scripts and configs included in this repository.
 
 ---
 
